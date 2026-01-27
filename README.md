@@ -5,6 +5,7 @@ configurations of the Bao hypervisor featuring multiple guest operating
 systems and targeting several supported platforms. The available demos are:
 
 * [Single-guest Baremetal](demos/baremetal/README.md)
+* [Dual-Baremetal Guests](demos/baremetal+baremetal/README.md)
 * [Dual-guest Linux+FreeRTOS](demos/linux+freertos/README.md)
 * [Dual-Guest Linux+Zephyr](demos/linux+zephyr/README.md)
 * [Dual-Guest Zephyr+Baremetal](demos/zephyr+baremetal/README.md)
@@ -167,6 +168,7 @@ mkdir -p $BAO_DEMOS_WRKDIR_IMGS
 Build guests according to the target demo:
 
 * [Single Baremetal Guest](demos/baremetal/README.md)
+* [Dual-Baremetal Guests](demos/baremetal+baremetal/README.md)
 * [Dual-guest Linux+FreeRTOS](demos/linux+freertos/README.md)
 * [Dual-Guest Linux+Zephyr](demos/linux+zephyr/README.md)
 * [Dual-Guest Zephyr+Baremetal](demos/zephyr+baremetal/README.md)
@@ -223,6 +225,7 @@ Build the firmware and deploy the system according to the target platform:
 #### AArch32 platforms:
 * [FVP-A Aarch32](platforms/fvp-a-aarch32/README.md)
 * [FVP-R Aarch32](platforms/fvp-r-aarch32/README.md)
+* [E3650](platforms/e3650/README.md)
 
 #### RISC-V platforms:
 * [QEMU virt](platforms/qemu-riscv64-virt/README.md)
@@ -244,29 +247,32 @@ Build the firmware and deploy the system according to the target platform:
 | FVP-A AArch32       | fvp-a-aarch32     | aarch32 |
 | FVP-R AArch32       | fvp-r-aarch32     | aarch32 |
 | QEMU RV64 virt      | qemu-riscv64-virt | riscv64 |
+| E3650               | e3650             | aarch32 |
 
-|                  | DEMO             |
-| ---------------- | ---------------- |
-| Baremetal guest  | baremetal        |
-| Linux+FreeRTOS   | linux+freertos   |
-| Linux+Zephyr     | linux+zephyr     |
-| Zephyr+Baremetal | zephyr+baremetal |
+|                  | DEMO                |
+| ---------------- | ------------------- |
+| Baremetal guest  | baremetal           |
+| Dual Baremetal   | baremetal+baremetal |
+| Linux+FreeRTOS   | linux+freertos      |
+| Linux+Zephyr     | linux+zephyr        |
+| Zephyr+Baremetal | zephyr+baremetal    |
 
 ## Appendix II
 
-|                   | baremetal | linux+freertos | linux+zephyr | zephyr+baremetal |
-| ----------------- | --------- | -------------- | ------------ | ---------------- |
-| zcu102            | x         | x              |              |                  |
-| zcu104            | x         | x              |              |                  |
-| imx8qm            | x         | x              |              |                  |
-| tx2               | x         | x              |              |                  |
-| rpi4              | x         | x              | x            |                  |
-| qemu-aarch64-virt | x         | x              | x            |                  |
-| fvp-a-aarch64     | x         | x              | x            | x                |
-| fvp-a-aarch32     | x         | x              | x            | x                |
-| fvp-r-aarch64     | x         | x              | x            | x                |
-| fvp-r-aarch32     | x         |                |              | x                |
-| qemu-riscv64-virt | x         | x              |              |                  |
+|                   | baremetal | linux+freertos | linux+zephyr | zephyr+baremetal | baremetal+baremetal |
+| ----------------- | --------- | -------------- | ------------ | ---------------- | ------------------- |
+| zcu102            | x         | x              |              |                  |                     |
+| zcu104            | x         | x              |              |                  |                     |
+| imx8qm            | x         | x              |              |                  |                     |
+| tx2               | x         | x              |              |                  |                     |
+| rpi4              | x         | x              | x            |                  |                     |
+| qemu-aarch64-virt | x         | x              | x            |                  |                     |
+| fvp-a-aarch64     | x         | x              | x            | x                |                     |
+| fvp-a-aarch32     | x         | x              | x            | x                |                     |
+| fvp-r-aarch64     | x         | x              | x            | x                |                     |
+| fvp-r-aarch32     | x         |                |              | x                |                     |
+| qemu-riscv64-virt | x         | x              |              |                  |                     |
+| e3650             | x         |                |              |                  |x                    |
 
 
 ---

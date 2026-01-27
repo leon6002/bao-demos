@@ -7,6 +7,10 @@ baremetal_args:=MEM_BASE=0x10000000
 fvpr_image_data:=$(baremetal_image)@0x10000000
 endif
 
+ifeq ($(PLATFORM),e3650)
+baremetal_args:=MEM_BASE=0x00B00000 MEM_SIZE=0x00100000 ARCH_CFLAGS="-Wno-error=incompatible-pointer-types"
+endif
+
 $(eval $(call build-baremetal, $(baremetal_image), $(baremetal_args)))
 
 guest_images:=$(baremetal_image)
