@@ -1,0 +1,31 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+if ARCH_BOARD_CUSTOM && ARCH_CHIP_E3650
+
+config BAO_GUEST
+	bool "Running as Bao Hypervisor Guest"
+	default n
+	help
+		Enable this option when NuttX runs as a guest VM under Bao.
+
+		This option is intentionally board/runtime scoped rather than
+		chip scoped because it controls how the NuttX guest integrates
+		with Bao's virtualized environment.
+endif
+
+if ETH_STACK
+config BOARD_DEFAULT_ETH_CONFIG
+    bool "Board use Realtek RTL8211F PHY and TC3xx MAC"
+    default y
+    select MAC_E3XX
+endif
+
+if CAN_STACK
+config BOARD_DEFAULT_CAN_CONFIG
+    bool "Board use E3xx Can"
+    default y
+    select CAN_E3XX
+endif

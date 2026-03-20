@@ -1,9 +1,14 @@
 baremetal_src:=$(wrkdir_src)/baremetal
 baremetal_repo:=https://github.com/bao-project/bao-baremetal-guest.git
 baremetal_branch:=demo
+baremetal_patch_dir:=$(bao_demos)/guests/baremetal/patches/$(PLATFORM)
+baremetal_patches:=$(sort $(wildcard $(baremetal_patch_dir)/*.patch))
 
 $(baremetal_src):
 	git clone $(baremetal_repo) $@ --branch $(baremetal_branch)
+ifneq ($(strip $(baremetal_patches)),)
+	git -C $@ apply $(baremetal_patches)
+endif
 
 baremetal_bin:=$(baremetal_src)/build/$(PLATFORM)/baremetal.bin
 
