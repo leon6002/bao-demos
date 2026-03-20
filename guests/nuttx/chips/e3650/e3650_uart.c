@@ -151,7 +151,6 @@ static int e3650_uart_interrupt(int irq, void *context, void *arg)
   struct uart_dev_s *dev = (struct uart_dev_s *)arg;
   volatile uint32_t *intr0 = (volatile uint32_t *)(UART_BASE + UART_INTR0_OFF);
   uint32_t status = *intr0;
-  bool handled = false;
 
   if ((status & UART_RX_INTMASK) != 0 || e3650_uart_rxavailable(dev))
     {
@@ -159,8 +158,6 @@ static int e3650_uart_interrupt(int irq, void *context, void *arg)
         {
           uart_recvchars(dev);
         }
-
-      handled = true;
     }
 
   if ((status & UART_RX_INTMASK) != 0)
@@ -168,7 +165,7 @@ static int e3650_uart_interrupt(int irq, void *context, void *arg)
       *intr0 = status & UART_RX_INTMASK;
     }
 
-  return handled ? OK : OK;
+  return OK;
 }
 
 static int e3650_uart_ioctl(struct file *filep, int cmd, unsigned long arg)

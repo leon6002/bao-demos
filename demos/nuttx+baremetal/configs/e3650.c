@@ -18,9 +18,9 @@ struct config config = {
         {
             .image = VM_IMAGE_BUILTIN(nuttx_image, 0x00BA0000),
             .entry = 0x00BA0064,
-            .cpu_affinity = 0x7,
+            .cpu_affinity = 0x3,
             .platform = {
-                .cpu_num = 3,
+                .cpu_num = 2,
                 .region_num = 1,
                 .regions = (struct vm_mem_region[]) {
                     {
@@ -60,9 +60,9 @@ struct config config = {
         {
             .image = VM_IMAGE_BUILTIN(baremetal_image, 0x00CB0000),
             .entry = 0x00CB0000,
-            .cpu_affinity = 0x8,
+            .cpu_affinity = 0xc,
             .platform = {
-                .cpu_num = 1,
+                .cpu_num = 2,
                 .region_num = 1,
                 .regions = (struct vm_mem_region[]) {
                     {

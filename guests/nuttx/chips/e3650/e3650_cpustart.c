@@ -115,7 +115,7 @@ static void (* const g_e3650_secondary_entry[E3650_GUEST_MAX_CPUS])(void) =
 #endif
 };
 
-static void e3650_cpu1_puts(const char *str)
+static void e3650_cpu_puts(const char *str)
 {
   while (*str != '\0')
     {
@@ -180,9 +180,9 @@ int up_cpu_start(int cpu)
       return -ENOTSUP;
     }
 
-  /* Under Bao, secondary vCPUs start in PSCI OFF state. Request CPU1 to
-   * start at the dedicated secondary entrypoint and keep SEV as a fallback
-   * nudge for any path that might still be waiting in WFE.
+  /* Under Bao, secondary vCPUs start in PSCI OFF state. Request the selected
+   * CPU to start at its dedicated secondary entrypoint and keep SEV as a
+   * fallback nudge for any path that might still be waiting in WFE.
    */
 
   target_cpu = g_e3650_guest_mpidr[cpu];
@@ -215,9 +215,9 @@ void arm_cpu_boot(int cpu)
 
   up_irqinitialize();
   arm_timer_secondary_init(0);
-  e3650_cpu1_puts("NX cpu ");
+  e3650_cpu_puts("NX cpu ");
   up_putc('0' + cpu);
-  e3650_cpu1_puts(" up\n");
+  e3650_cpu_puts(" up\n");
   nx_idle_trampoline();
 }
 

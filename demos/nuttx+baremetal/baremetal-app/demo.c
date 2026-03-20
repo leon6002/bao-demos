@@ -26,10 +26,12 @@ struct shmem_mailbox {
 };
 
 static spinlock_t print_lock = SPINLOCK_INITVAL;
+static spinlock_t master_lock = SPINLOCK_INITVAL;
 static volatile struct shmem_mailbox *const g_mailbox =
     (volatile struct shmem_mailbox *)SHMEM_BASE;
 static uint32_t g_seen_nuttx_seq;
 static uint32_t g_poll_ticks;
+static bool g_master_done;
 
 static void shmem_update_status(void)
 {
@@ -94,7 +96,7 @@ static void shmem_poll(void)
 
 void main(void)
 {
-    static volatile bool master_done = false;
+    bool master_done;
 
     if (cpu_is_master()) {
         spin_lock(&print_lock);
@@ -103,10 +105,17 @@ void main(void)
 
         shmem_init();
 
-        master_done = true;
+        spin_lock(&master_lock);
+        g_master_done = true;
+        spin_unlock(&master_lock);
     }
 
-    while (!master_done);
+    do {
+        spin_lock(&master_lock);
+        master_done = g_master_done;
+        spin_unlock(&master_lock);
+    } while (!master_done);
+
     spin_lock(&print_lock);
     printf("cpu %d up\n", get_cpuid());
     spin_unlock(&print_lock);
