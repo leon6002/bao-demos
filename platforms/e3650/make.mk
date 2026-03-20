@@ -18,7 +18,6 @@ bao_bin:=$(wrkdir_demo_imgs)/bao.bin
 guest_bin:=$(wrkdir_demo_imgs)/baremetal_vm0.bin
 
 $(pac_image): $(bao_image) $(guest_images) $(pac_tool_dir)/bao_pac.sh
-	$(pac_tool_dir)/bao_pac.sh $(bao_image) $(guest_images)
+	GUEST_ADDR=0x00CFF000 $(pac_tool_dir)/bao_pac.sh $(bao_image) $(word 1,$(guest_images))
 
 platform: $(pac_image)
-
