@@ -4,7 +4,6 @@
 #include <nuttx/irq.h>
 #include <stdint.h>
 #include "arm_internal.h"
-#include "arm_tcm.h"
 #include "arch/chip/chip.h"
 #include "chip.h"
 
@@ -148,12 +147,6 @@ static void e3650_wdt9_disable(void)
 
 void arm_el_init(void)
 {
-#ifndef CONFIG_BAO_GUEST
-#ifdef CONFIG_ARCH_CHIP_E3650_TCM_ENABLE
-	arm_tcm_init();
-	arm_tcm_load();
-#endif
-#endif
 	__asm__ __volatile__ ("isb" : : : "memory");
 }
 

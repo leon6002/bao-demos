@@ -18,12 +18,4 @@
 #
 # ##############################################################################
 
-set(SRCS)
-
-if(CONFIG_ARCH_CHIP_E3650 AND NOT CONFIG_BAO_GUEST)
-  list(APPEND SRCS arm_tcm.c)
-endif()
-
-target_sources(arch PRIVATE ${SRCS})
-
 target_include_directories(arch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
