@@ -15,7 +15,7 @@ diff --git a/arch/arm/include/armv8-r/irq.h b/arch/arm/include/armv8-r/irq.h
 index e08636f1..42383b2e 100644
 --- a/arch/arm/include/armv8-r/irq.h
 +++ b/arch/arm/include/armv8-r/irq.h
-@@ -481,12 +481,33 @@ static inline_function uintptr_t up_getusrsp(void *regs)
+@@ -481,12 +481,23 @@ static inline_function uintptr_t up_getusrsp(void *regs)
  noinstrument_function
  static inline_function void up_set_interrupt_context(bool flag)
  {
@@ -29,6 +29,7 @@ index e08636f1..42383b2e 100644
 +    {
 +      g_current_task_bao[up_cpu_index()] &= ~1u;
 +    }
+-  CP15_MODIFY(flag, 1ul, TPIDRPRW);
  }
  
 +extern uint32_t g_current_task_bao[CONFIG_SMP_NCPUS];
@@ -36,6 +37,9 @@ index e08636f1..42383b2e 100644
 +#define up_this_task()         ((struct tcb_s *)((g_current_task_bao[up_cpu_index()] != 0) ? (g_current_task_bao[up_cpu_index()] & ~1u) : (uintptr_t)g_running_tasks[up_cpu_index()]))
 +#define up_update_task(t)      (g_current_task_bao[up_cpu_index()] = ((uint32_t)(t) & ~1u) | (g_current_task_bao[up_cpu_index()] & 1u))
 +#define up_interrupt_context() (g_current_task_bao[up_cpu_index()] & 1u)
+-#define up_this_task()         ((struct tcb_s *)(CP15_GET(TPIDRPRW) & ~1ul))
+-#define up_update_task(t)      CP15_MODIFY(t, ~1ul, TPIDRPRW)
+-#define up_interrupt_context() (CP15_GET(TPIDRPRW) & 1)
  
  /****************************************************************************
   * Public Data
@@ -43,21 +47,28 @@ diff --git a/arch/arm/src/armv8-r/arm_gicv3.c b/arch/arm/src/armv8-r/arm_gicv3.c
 index f0b723a9..7abd1061 100644
 --- a/arch/arm/src/armv8-r/arm_gicv3.c
 +++ b/arch/arm/src/armv8-r/arm_gicv3.c
-@@ -104,7 +104,11 @@ static inline int sys_test_bit(unsigned long addr, unsigned int bit)
+@@ -104,7 +104,7 @@ static inline int sys_test_bit(unsigned long addr, unsigned int bit)
  
  static inline unsigned long gic_get_rdist(void)
  {
 +  return CONFIG_GICR_BASE + (up_cpu_index() * CONFIG_GICR_OFFSET);
+-  return g_gic_rdists[this_cpu()];
  }
  
  static inline uint32_t read_gicd_wait_rwp(void)
-@@ -227,6 +231,11 @@ void arm_gic_irq_set_priority(unsigned int intid, unsigned int prio,
+@@ -227,42 +231,49 @@ void arm_gic_irq_set_priority(unsigned int intid, unsigned int prio,
  
  int arm_gic_irq_trigger(unsigned int intid, uint32_t flags)
  {
 +  (void)intid;
 +  (void)flags;
 +  return OK;
+-  uint32_t      idx  = intid / GIC_NUM_INTR_PER_REG;
+-  uint32_t      shift;
+-  uint32_t      val;
+-    }
+-
+-  return -EINVAL;
  }
  
  void arm_gic_irq_enable(unsigned int intid)
@@ -71,6 +82,12 @@ index f0b723a9..7abd1061 100644
 +    }
 +
 +  return;
+-  uint32_t mask = BIT(intid & (GIC_NUM_INTR_PER_REG - 1));
+-  uint32_t idx  = intid / GIC_NUM_INTR_PER_REG;
+-
+-    }
+-
+-  putreg32(mask, ISENABLER(GET_DIST_BASE(intid), idx));
  }
  
  void arm_gic_irq_disable(unsigned int intid)
@@ -84,6 +101,12 @@ index f0b723a9..7abd1061 100644
 +    }
 +
 +  return;
+-  uint32_t mask = BIT(intid & (GIC_NUM_INTR_PER_REG - 1));
+-  uint32_t idx  = intid / GIC_NUM_INTR_PER_REG;
+-
+-  /* poll to ensure write is complete */
+-
+-  gic_wait_rwp(intid);
  }
  
  bool arm_gic_irq_is_enabled(unsigned int intid)
@@ -98,10 +121,16 @@ index f0b723a9..7abd1061 100644
 +    }
 +
 +  return true;
+-  uint32_t mask = BIT(intid & (GIC_NUM_INTR_PER_REG - 1));
+-  uint32_t idx  = intid / GIC_NUM_INTR_PER_REG;
+-  uint32_t val;
+-  val = getreg32(ISENABLER(GET_DIST_BASE(intid), idx));
+-
+-  return (val & mask) != 0;
  }
  
  #ifdef CONFIG_ARCH_HIPRI_INTERRUPT
-@@ -552,6 +599,51 @@ static void gicv3_cpuif_init(void)
+@@ -552,6 +599,49 @@ static void gicv3_cpuif_init(void)
    CP15_SET(ICC_IGRPEN1, 1);
  }
  
@@ -130,6 +159,9 @@ index f0b723a9..7abd1061 100644
 +  putreg32(BIT(GICD_CTRL_ARE_S) | BIT(GICD_CTLR_ENABLE_G1NS) |
 +           BIT(GICD_CTLR_ENABLE_G0), GICD_CTLR);
 +#else
++  putreg32(BIT(GICD_CTRL_ARE_S) | BIT(GICD_CTLR_ENABLE_G1NS), GICD_CTLR);
++#endif
++#else
 +#ifdef CONFIG_ARCH_HIPRI_INTERRUPT
 +  putreg32(BIT(GICD_CTRL_ARE_NS) | BIT(GICD_CTLR_ENABLE_G1NS) |
 +           BIT(GICD_CTLR_ENABLE_G0), GICD_CTLR);
@@ -144,7 +176,6 @@ index f0b723a9..7abd1061 100644
 +
 +  CP15_SET(ICC_IGRPEN1, 1);
 +}
-+#endif
 +
  static void gicv3_dist_init(void)
  {
@@ -158,7 +189,7 @@ index f0b723a9..7abd1061 100644
    DEBUGVERIFY(irq_attach(GIC_SMP_CALL, nxsched_smp_call_handler, NULL));
  #endif
  }
-@@ -699,6 +791,18 @@ void up_disable_irq(int irq)
+@@ -699,12 +791,16 @@ void up_disable_irq(int irq)
  
  int up_prioritize_irq(int irq, int priority)
  {
@@ -172,19 +203,31 @@ index f0b723a9..7abd1061 100644
 +    }
 +
 +  return OK;
+-  unsigned long base = GET_DIST_BASE(irq);
+-
+-  DEBUGASSERT(irq >= 0 && irq < NR_IRQS &&
+-    }
+-
+-  return -EINVAL;
  }
  
  /***************************************************************************
-@@ -727,6 +832,10 @@ int up_prioritize_irq(int irq, int priority)
+@@ -727,12 +832,8 @@ int up_prioritize_irq(int irq, int priority)
  
  void up_affinity_irq(int irq, cpu_set_t cpuset)
  {
 +  (void)irq;
 +  (void)cpuset;
+-  if (GIC_IS_SPI(irq))
+-    {
+-      /* Only support interrupt routing mode 0,
+-
+-      arm_gic_write_irouter(ffs(cpuset) - 1, irq);
+-    }
  }
  
  /***************************************************************************
-@@ -756,6 +866,14 @@ void up_affinity_irq(int irq, cpu_set_t cpuset)
+@@ -756,12 +866,12 @@ void up_affinity_irq(int irq, cpu_set_t cpuset)
  
  void up_trigger_irq(int irq, cpu_set_t cpuset)
  {
@@ -194,15 +237,27 @@ index f0b723a9..7abd1061 100644
 +    }
 +
 +  return;
+-  uint32_t  mask  = BIT(irq & (GIC_NUM_INTR_PER_REG - 1));
+-  uint32_t  idx   = irq / GIC_NUM_INTR_PER_REG;
+-
+-
+-      putreg32(mask, ISPENDR(GET_DIST_BASE(irq), idx));
+-    }
  }
  
  #ifdef CONFIG_ARCH_HIPRI_INTERRUPT
-@@ -974,6 +1093,10 @@ static void arm_gic_init(void)
+@@ -974,12 +1093,8 @@ static void arm_gic_init(void)
  
  int arm_gic_initialize(void)
  {
 +  gicv3_bao_guest_cpuif_init();
 +  return 0;
+-  int err;
+-
+-  err = gic_validate_dist_version();
+-  arm_gic_init();
+-
+-  return 0;
  }
  
  #ifdef CONFIG_SMP
@@ -224,7 +279,7 @@ index 57d3d5bb..d7a2f051 100644
  
  	.global _hyp_vector_start
  	.global _sys_vector_start
-@@ -187,6 +191,101 @@ __cpux_wfi:
+@@ -187,6 +191,94 @@ __cpux_wfi:
  
  #endif
  
@@ -319,17 +374,25 @@ index 57d3d5bb..d7a2f051 100644
  __cpu0_start:
  
  	/* Make sure that IRQs and FIQs are disabled */
-@@ -199,8 +298,10 @@ __cpu0_start:
+@@ -199,8 +298,6 @@ __cpu0_start:
  	mov		fp, #0
  
  	/* Set Hyp/PL2 Vector table base register */
+-	ldr		r0, .Lhypvectorstart
+-	mcr		CP15_HVBAR(r0)
  
  	/* Invalidate caches and TLBs.
  	 *
-@@ -215,6 +316,7 @@ __cpu0_start:
+@@ -215,12 +316,6 @@ __cpu0_start:
  	 * the ICache, however, must be invalidated.
  	 */
  
+-	mov		r0, #0
+-	mcr		CP15_TPIDRPRW(r0)	/* Initialize percpu reg TPIDRPRW */
+-	mcr		CP15_BPIALL(r0)		/* Invalidate entire branch prediction array */
+-
+-	ldr		r0, =HACTLR_INIT
+-	mcr		CP15_HACTLR(r0)  /* Enable EL1 access all IMP DEFINED registers */
  
  #ifdef CONFIG_ARCH_FPU
  	bl		arm_fpuconfig
@@ -384,7 +447,7 @@ diff --git a/arch/arm/src/armv8-r/arm_timer.c b/arch/arm/src/armv8-r/arm_timer.c
 index 7630fe90..a1127d7f 100644
 --- a/arch/arm/src/armv8-r/arm_timer.c
 +++ b/arch/arm/src/armv8-r/arm_timer.c
-@@ -60,7 +60,11 @@
+@@ -60,7 +60,7 @@
  #  define GIC_IRQ_PHY_TIMER      GIC_IRQ_NONSEC_PHY_TIMER
  #endif
  
@@ -393,27 +456,32 @@ index 7630fe90..a1127d7f 100644
  #define ARM_ARCH_TIMER_PRIO      IRQ_DEFAULT_PRIORITY
  #define ARM_ARCH_TIMER_FLAGS     IRQ_TYPE_LEVEL
  
-@@ -76,30 +80,52 @@ static inline void arm_timer_set_freq(uint32_t freq)
+@@ -76,30 +80,30 @@ static inline void arm_timer_set_freq(uint32_t freq)
  
  static inline uint64_t arm_timer_phy_count(void)
  {
 +  return CP15_GET64(CNTVCT);
+-  return CP15_GET64(CNTPCT);
  }
  
  static inline void arm_timer_phy_set_relative(uint32_t tval)
  {
 +  CP15_SET(CNTV_TVAL, tval);
+-  CP15_SET(CNTP_TVAL, tval);
  }
  
  static inline void arm_timer_phy_set_absolute(uint64_t cval)
  {
 +  CP15_SET64(CNTV_CVAL, cval);
+-  CP15_SET64(CNTP_CVAL, cval);
  }
  
  static inline void arm_timer_phy_enable(bool enable)
  {
 +  CP15_MODIFY((uint32_t)enable << CNT_CTL_ENABLE_BIT,
 +              BIT(CNT_CTL_ENABLE_BIT), CNTV_CTL);
+-  CP15_MODIFY((uint32_t)enable << CNT_CTL_ENABLE_BIT,
+-              BIT(CNT_CTL_ENABLE_BIT), CNTP_CTL);
    UP_ISB();
  }
  
@@ -421,6 +489,8 @@ index 7630fe90..a1127d7f 100644
  {
 +  CP15_MODIFY((uint32_t)mask << CNT_CTL_IMASK_BIT,
 +              BIT(CNT_CTL_IMASK_BIT), CNTV_CTL);
+-  CP15_MODIFY((uint32_t)mask << CNT_CTL_IMASK_BIT,
+-              BIT(CNT_CTL_IMASK_BIT), CNTP_CTL);
    UP_ISB();
  }
  
