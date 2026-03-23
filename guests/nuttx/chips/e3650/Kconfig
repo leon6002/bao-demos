@@ -48,13 +48,11 @@ config E3650_UART0
 
 config ARCH_CHIP_E3650_GICD_BASE
 	hex "E3650 Processor (Cortex-r52) GIC Distributor Base"
-	default 0xF4000000 if BAO_GUEST
-	default 0x01c00000
+	default 0xF4000000
 
 config ARCH_CHIP_E3650_GICR_BASE
 	hex "E3650 Processor (Cortex-r52) GIC Re-distributor Base"
-	default 0xF4100000 if BAO_GUEST
-	default 0x01d00000
+	default 0xF4100000
 
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	int "system clock frequency"

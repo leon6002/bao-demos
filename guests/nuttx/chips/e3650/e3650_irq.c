@@ -86,21 +86,15 @@ uintptr_t up_get_intstackbase(int cpu)
 
 void up_init_irq(int irq, int irq_prio)
 {
-#ifdef CONFIG_BAO_GUEST
-  /* In Bao guest mode, allow guest-visible SPI priority programming through
-   * the virtual GIC distributor, but leave physical interrupt routing and
-   * trigger ownership to Bao.
+  /* Allow guest-visible SPI priority programming through the virtual GIC
+   * distributor, but leave physical interrupt routing and trigger ownership
+   * to Bao.
    */
 #ifdef CONFIG_ARCH_IRQPRIO
 	up_prioritize_irq(irq, irq_prio << GICV3_PRIO_SHIF);
 #else
   (void)irq;
   (void)irq_prio;
-#endif
-#else
-#ifdef CONFIG_ARCH_IRQPRIO
-	up_prioritize_irq(irq, irq_prio << GICV3_PRIO_SHIF);
-#endif
 #endif
 }
 
@@ -140,22 +134,6 @@ void up_send_smp_call(cpu_set_t cpuset)
 
 void up_clear_irq(int irq)
 {
-#ifdef CONFIG_BAO_GUEST
 	/* Bao owns the physical GIC pending state for guest VMs. */
 	(void)irq;
-#else
-	uint32_t index;
-	uint32_t offset;
-	uint32_t base;
-
-	if (GIC_IS_SPI(irq)) {
-		index = irq / GIC_NUM_INTR_PER_REG;
-		offset = irq % GIC_NUM_INTR_PER_REG;
-		modifyreg32(ICPENDR(CONFIG_GICD_BASE, index),
-				 0, (1 << offset));
-	} else {
-		base = CONFIG_GICR_BASE + up_cpu_index() * CONFIG_GICR_OFFSET + GICR_SGI_BASE_OFF;
-			modifyreg32(ICPENDR(base, 0), 0, (1 << irq));
-		}
-#endif
 }

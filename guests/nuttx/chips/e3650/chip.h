@@ -62,11 +62,4 @@
 
 #endif /* __ASSEMBLY__ */
 
-#ifndef __ASSEMBLY__
-void e3650_init(void);
-void e3650_uart_init(void);
-int e3650_mpu_init(void);
-void e3650_start_core(uint32_t cpu, uint32_t addr);
-#endif
-
 #endif /* __CHIPS_E3650_CHIP_H */

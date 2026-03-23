@@ -7,10 +7,6 @@
 #include "arch/chip/chip.h"
 #include "chip.h"
 
-#define WDT9_REGBASE (0xF00B0000ul)
-#define WDT_CTRL_WDT_EN ((uint32_t)0x01U << 1U)
-#define WDT_CTRL_WDT_EN_SRC ((uint32_t)0x01U << 8U)
-
 extern uint8_t _load_data_start[];
 extern uint8_t _data_start[];
 extern uint8_t _data_end[];
@@ -18,23 +14,11 @@ extern uint8_t _data_end[];
 extern uint8_t _dma_buffer_start[];
 extern uint8_t _dma_buffer_end[];
 
-#ifdef CONFIG_BAO_GUEST
 /* Per-CPU task/context storage for Bao guest mode.
  * Replaces CP15 TPIDRPRW, which is not accessible in guest VMs.
  */
 
 uint32_t g_current_task_bao[CONFIG_SMP_NCPUS] = {0};
-
-static inline void e3650_guest_init(void)
-{
-}
-
-static inline void e3650_guest_start_core(uint32_t cpu, uint32_t addr)
-{
-  (void)cpu;
-  (void)addr;
-}
-#endif
 
 #if defined(CONFIG_BMP) || defined(CONFIG_SMP)
 static void e3650_boot_puts(const char *str)
@@ -54,7 +38,6 @@ static void e3650_boot_log_cpu_up(int cpu)
 #endif
 
 #if defined(CONFIG_BMP)
-extern void _sys_vector_start(void);
 extern uint8_t _core0_percpu_data_start[];
 extern uint8_t _core0_percpu_data_end[];
 extern uint8_t _core0_percpu_bss_start[];
@@ -121,17 +104,6 @@ static inline_function void arm_custom_data_load(void)
 	}
 }
 
-static void e3650_wdt9_disable(void)
-{
-#ifndef CONFIG_BAO_GUEST
-	/* Turn off WDT9 for default open in system01 */
-	uint32_t regVal = getreg32(WDT9_REGBASE);
-
-	putreg32(regVal & ~WDT_CTRL_WDT_EN, WDT9_REGBASE);
-	modifyreg32(WDT9_REGBASE, 0, WDT_CTRL_WDT_EN_SRC);
-#endif
-}
-
 /****************************************************************************
  * Name: arm_el_init
  *
@@ -158,9 +130,6 @@ void arm_el_init(void)
  *
  ****************************************************************************/
 
-/* ISP R52 FREQ = 600M */
-#define CPU_COUNTER_FREQUENCE (600000000U)
-
 void arm_boot(void)
 {
 	int cpu = up_cpu_index();
@@ -170,30 +139,10 @@ void arm_boot(void)
 	uint32_t percpu_data_size = (uint32_t)_core0_percpu_data_end - (uint32_t)_core0_percpu_data_start;
 #endif
 
-	e3650_wdt9_disable();
-
 	if (cpu == 0) {
 		arm_custom_data_load();
 		arm_custom_bss_init();
 	}
-
-#ifndef CONFIG_BAO_GUEST
-	e3650_init();
-#else
-  e3650_guest_init();
-#endif
-
-#ifdef CONFIG_ARCH_PERF_EVENTS
-#ifndef CONFIG_BAO_GUEST
-	up_perf_init((void *)CPU_COUNTER_FREQUENCE);
-#endif
-#endif
-
-#ifndef CONFIG_BAO_GUEST
-	up_enable_icache();
-	/* TODO: memamp is not ready yet, disable d cache temporarily */
-	// up_enable_dcache();
-#endif
 
 	if (cpu == 0) {
 #ifdef CONFIG_BMP
@@ -202,13 +151,6 @@ void arm_boot(void)
 			       percpu_data_size);
 		}
 
-		for (index = 1; index < CONFIG_BMP_NCPUS; index++) {
-#ifndef CONFIG_BAO_GUEST
-			e3650_start_core(index, (uint32_t)_sys_vector_start);
-#else
-      e3650_guest_start_core(index, (uint32_t)_sys_vector_start);
-#endif
-		}
 #endif
 	}
 #ifdef USE_EARLYSERIALINIT

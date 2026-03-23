@@ -1,7 +1,5 @@
 #include <nuttx/config.h>
 
-#ifdef CONFIG_BAO_GUEST
-
 #include <sys/types.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -244,5 +242,3 @@ void up_putc(int ch)
 {
   e3650_uart_putc(ch);
 }
-
-#endif /* CONFIG_BAO_GUEST */
