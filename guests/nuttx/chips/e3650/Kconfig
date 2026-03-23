@@ -46,11 +46,6 @@ config E3650_UART0
 	select UART0_SERIALDRIVER
 	select ARCH_HAVE_SERIAL_TERMIOS
 
-
-config ARCH_CHIP_E3650_TCM_ENABLE
-	bool "Enable TCM or not"
-	default n
-
 config ARCH_CHIP_E3650_GICD_BASE
 	hex "E3650 Processor (Cortex-r52) GIC Distributor Base"
 	default 0xF4000000 if BAO_GUEST
