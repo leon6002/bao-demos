@@ -2,6 +2,7 @@
 #define __CHIPS_E3650_INCLUDE_CHIP_H
 
 #include <nuttx/config.h>
+#include <stdint.h>
 
 /* Number of bytes in x kibibytes/mebibytes/gibibytes */
 

@@ -9,25 +9,7 @@
 #include <nuttx/arch.h>
 #include <nuttx/serial/serial.h>
 
-#define UART_BASE       0xF8970000UL
-#define UART_INTR0_OFF  0x20U
-#define UART_INTEN0_OFF 0x30U
-#define UART_FSR0_OFF   0x60U
-#define UART_FSR1_OFF   0x64U
-#define UART_TXDR_OFF   0x200U
-#define UART_RXDR_OFF   0x300U
-
-#define FSR0_TX_FULL    (1U << 25)
-#define FSR1_RX_EMPTY   (1U << 24)
-#define INTR0_RXFWF     (1U << 1)
-#define INTEN0_RXFWFE   (1U << 1)
-
-#define UART_RX_INTMASK INTR0_RXFWF
-
-#define UART_IRQ        117
-#define UART_IRQ_PRIO   20 /* 20 << 3 == 0xA0 */
-
-void up_init_irq(int irq, int irq_prio);
+#include "e3650_uart.h"
 
 static int  e3650_uart_setup(struct uart_dev_s *dev);
 static void e3650_uart_shutdown(struct uart_dev_s *dev);
@@ -74,16 +56,16 @@ static struct uart_dev_s g_uart_dev =
 
 static void e3650_uart_wait_txready(void)
 {
-  volatile uint32_t *fsr0 = (volatile uint32_t *)(UART_BASE + UART_FSR0_OFF);
+  volatile uint32_t *fsr0 = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_FSR0_OFF);
 
-  while ((*fsr0 & FSR0_TX_FULL) != 0)
+  while ((*fsr0 & E3650_UART_FSR0_TX_FULL) != 0)
     {
     }
 }
 
 static void e3650_uart_putc(int ch)
 {
-  volatile uint32_t *txdr = (volatile uint32_t *)(UART_BASE + UART_TXDR_OFF);
+  volatile uint32_t *txdr = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_TXDR_OFF);
 
   e3650_uart_wait_txready();
   *txdr = (uint32_t)ch;
@@ -96,23 +78,23 @@ static int e3650_uart_setup(struct uart_dev_s *dev)
 
 static void e3650_uart_shutdown(struct uart_dev_s *dev)
 {
-  up_disable_irq(UART_IRQ);
+  up_disable_irq(E3650_UART_IRQ);
 }
 
 static int e3650_uart_attach(struct uart_dev_s *dev)
 {
-  int ret = irq_attach(UART_IRQ, e3650_uart_interrupt, dev);
+  int ret = irq_attach(E3650_UART_IRQ, e3650_uart_interrupt, dev);
 
   if (ret == OK)
     {
-      volatile uint32_t *intr0 = (volatile uint32_t *)(UART_BASE +
-                                                       UART_INTR0_OFF);
+      volatile uint32_t *intr0 = (volatile uint32_t *)(E3650_UART_BASE +
+                                                       E3650_UART_INTR0_OFF);
 
       /* Clear stale RX pending state before enabling the guest IRQ path. */
 
-      *intr0 = UART_RX_INTMASK;
-      up_init_irq(UART_IRQ, UART_IRQ_PRIO);
-      up_enable_irq(UART_IRQ);
+      *intr0 = E3650_UART_RX_INTMASK;
+      up_init_irq(E3650_UART_IRQ, E3650_UART_IRQ_PRIO);
+      up_enable_irq(E3650_UART_IRQ);
     }
 
   return ret;
@@ -120,17 +102,17 @@ static int e3650_uart_attach(struct uart_dev_s *dev)
 
 static void e3650_uart_detach(struct uart_dev_s *dev)
 {
-  up_disable_irq(UART_IRQ);
-  irq_detach(UART_IRQ);
+  up_disable_irq(E3650_UART_IRQ);
+  irq_detach(E3650_UART_IRQ);
 }
 
 static int e3650_uart_interrupt(int irq, void *context, void *arg)
 {
   struct uart_dev_s *dev = (struct uart_dev_s *)arg;
-  volatile uint32_t *intr0 = (volatile uint32_t *)(UART_BASE + UART_INTR0_OFF);
+  volatile uint32_t *intr0 = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_INTR0_OFF);
   uint32_t status = *intr0;
 
-  if ((status & UART_RX_INTMASK) != 0 || e3650_uart_rxavailable(dev))
+  if ((status & E3650_UART_RX_INTMASK) != 0 || e3650_uart_rxavailable(dev))
     {
       while (e3650_uart_rxavailable(dev))
         {
@@ -138,9 +120,9 @@ static int e3650_uart_interrupt(int irq, void *context, void *arg)
         }
     }
 
-  if ((status & UART_RX_INTMASK) != 0)
+  if ((status & E3650_UART_RX_INTMASK) != 0)
     {
-      *intr0 = status & UART_RX_INTMASK;
+      *intr0 = status & E3650_UART_RX_INTMASK;
     }
 
   return OK;
@@ -153,7 +135,7 @@ static int e3650_uart_ioctl(struct file *filep, int cmd, unsigned long arg)
 
 static int e3650_uart_receive(struct uart_dev_s *dev, unsigned int *status)
 {
-  volatile uint32_t *rxdr = (volatile uint32_t *)(UART_BASE + UART_RXDR_OFF);
+  volatile uint32_t *rxdr = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_RXDR_OFF);
   uint8_t ch = (uint8_t)(*rxdr & 0xff);
 
   if (ch == '\r')
@@ -167,19 +149,19 @@ static int e3650_uart_receive(struct uart_dev_s *dev, unsigned int *status)
 
 static void e3650_uart_rxint(struct uart_dev_s *dev, bool enable)
 {
-  volatile uint32_t *inten0 = (volatile uint32_t *)(UART_BASE +
-                                                    UART_INTEN0_OFF);
-  volatile uint32_t *intr0 = (volatile uint32_t *)(UART_BASE + UART_INTR0_OFF);
+  volatile uint32_t *inten0 = (volatile uint32_t *)(E3650_UART_BASE +
+                                                    E3650_UART_INTEN0_OFF);
+  volatile uint32_t *intr0 = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_INTR0_OFF);
   uint32_t val = *inten0;
 
   if (enable)
     {
-      *intr0 = UART_RX_INTMASK;
-      val |= INTEN0_RXFWFE;
+      *intr0 = E3650_UART_RX_INTMASK;
+      val |= E3650_UART_INTEN0_RXFWFE;
     }
   else
     {
-      val &= ~INTEN0_RXFWFE;
+      val &= ~E3650_UART_INTEN0_RXFWFE;
     }
 
   *inten0 = val;
@@ -187,8 +169,8 @@ static void e3650_uart_rxint(struct uart_dev_s *dev, bool enable)
 
 static bool e3650_uart_rxavailable(struct uart_dev_s *dev)
 {
-  volatile uint32_t *fsr1 = (volatile uint32_t *)(UART_BASE + UART_FSR1_OFF);
-  return (*fsr1 & FSR1_RX_EMPTY) == 0;
+  volatile uint32_t *fsr1 = (volatile uint32_t *)(E3650_UART_BASE + E3650_UART_FSR1_OFF);
+  return (*fsr1 & E3650_UART_FSR1_RX_EMPTY) == 0;
 }
 
 static void e3650_uart_send(struct uart_dev_s *dev, int ch)
