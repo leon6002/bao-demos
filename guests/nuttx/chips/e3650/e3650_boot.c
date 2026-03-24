@@ -80,16 +80,10 @@ void arm_boot(void)
 	int cpu = up_cpu_index();
 
 	if (cpu == 0) {
+		/* One-time runtime image init (.data copy + custom bss clear). */
 		arm_custom_data_load();
 		arm_custom_bss_init();
 	}
-#ifdef USE_EARLYSERIALINIT
-	/* Perform early serial initialization if we are going to use the serial
-   * driver.
-   */
-
-	arm_earlyserialinit();
-#endif
 
 #ifdef CONFIG_SMP
 	e3650_boot_log_cpu_up(cpu);
