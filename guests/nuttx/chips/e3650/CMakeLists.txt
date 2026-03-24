@@ -12,5 +12,3 @@ endif()
 target_sources(arch PRIVATE ${SRCS})
 
 target_include_directories(arch PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-add_subdirectory("../common" "${CMAKE_CURRENT_BINARY_DIR}/common")
