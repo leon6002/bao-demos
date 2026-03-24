@@ -7,7 +7,7 @@ OUTPUT_ARCH(arm)
 ENTRY(__start)
 
 #define HEAP_SIZE 0x10000
-#if defined(CONFIG_BMP) || defined(CONFIG_SMP)
+#ifdef CONFIG_SMP
 #  define PER_CPU_RESERVED_SIZE 0x3000
 #endif
 
@@ -81,7 +81,7 @@ SECTIONS
     _dma_buffer_start = .;
     _dma_buffer_end = .;
 
-#if defined(CONFIG_BMP)
+#ifdef CONFIG_SMP
     .core0_percpu_data : ALIGN(64) {
         __PERCPU0_START = .;
         _core0_percpu_data_start = .;
@@ -98,7 +98,7 @@ SECTIONS
         __PERCPU0_END = . - 1;
     } > RAM
 
-#  if (CONFIG_BMP_NCPUS > 1)
+#  if (CONFIG_SMP_NCPUS > 1)
     .core1_percpu_reserve (NOLOAD) : ALIGN(64) {
         __PERCPU1_START = .;
         _core1_percpu_reserve_start = .;
@@ -106,7 +106,7 @@ SECTIONS
         __PERCPU1_END = . - 1;
     } > RAM
 #  endif
-#  if (CONFIG_BMP_NCPUS > 2)
+#  if (CONFIG_SMP_NCPUS > 2)
     .core2_percpu_reserve (NOLOAD) : ALIGN(64) {
         __PERCPU2_START = .;
         _core2_percpu_reserve_start = .;
@@ -114,7 +114,7 @@ SECTIONS
         __PERCPU2_END = . - 1;
     } > RAM
 #  endif
-#  if (CONFIG_BMP_NCPUS > 3)
+#  if (CONFIG_SMP_NCPUS > 3)
     .core3_percpu_reserve (NOLOAD) : ALIGN(64) {
         __PERCPU3_START = .;
         _core3_percpu_reserve_start = .;
@@ -129,20 +129,17 @@ SECTIONS
         _core0_idle_stack_start = .;
         . += 0x2000;  /* 8KB idle stack */
         _core0_idle_stack_end = .;
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 1)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 1))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 1)
         _core1_idle_stack_start = .;
         . += 0x2000;
         _core1_idle_stack_end = .;
 #endif
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 2)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 2))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 2)
         _core2_idle_stack_start = .;
         . += 0x2000;
         _core2_idle_stack_end = .;
 #endif
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 3)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 3))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 3)
         _core3_idle_stack_start = .;
         . += 0x2000;
         _core3_idle_stack_end = .;
@@ -156,24 +153,21 @@ SECTIONS
         . += HEAP_SIZE;
         _core0_heap_end = .;
         __HEAP0_END = . - 1;
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 1)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 1))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 1)
         __HEAP1_START = .;
         _core1_heap_start = .;
         . += HEAP_SIZE;
         _core1_heap_end = .;
         __HEAP1_END = . - 1;
 #endif
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 2)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 2))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 2)
         __HEAP2_START = .;
         _core2_heap_start = .;
         . += HEAP_SIZE;
         _core2_heap_end = .;
         __HEAP2_END = . - 1;
 #endif
-#if (defined(CONFIG_BMP) && (CONFIG_BMP_NCPUS > 3)) || \
-    (defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 3))
+#if defined(CONFIG_SMP) && (CONFIG_SMP_NCPUS > 3)
         __HEAP3_START = .;
         _core3_heap_start = .;
         . += HEAP_SIZE;
@@ -183,28 +177,26 @@ SECTIONS
     } > RAM
 
     /* Dummy symbols for unused additional cores */
-#if !defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 1)
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 1)
     _core1_heap_start = _core0_heap_end;
     _core1_heap_end = _core0_heap_end;
 #endif
-#if (!defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 2)) && \
-    (!defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 2))
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 2)
     _core2_heap_start = _core0_heap_end;
     _core2_heap_end = _core0_heap_end;
 #endif
-#if (!defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 3)) && \
-    (!defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 3))
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 3)
     _core3_heap_start = _core0_heap_end;
     _core3_heap_end = _core0_heap_end;
 #endif
 
-#if !defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 1)
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 1)
     _core1_percpu_reserve_start = _core0_heap_end;
 #endif
-#if !defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 2)
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 2)
     _core2_percpu_reserve_start = _core0_heap_end;
 #endif
-#if !defined(CONFIG_BMP) || (CONFIG_BMP_NCPUS <= 3)
+#if !defined(CONFIG_SMP) || (CONFIG_SMP_NCPUS <= 3)
     _core3_percpu_reserve_start = _core0_heap_end;
 #endif
 
