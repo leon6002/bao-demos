@@ -64,7 +64,7 @@ static inline_function void arm_custom_data_load(void)
 
 void arm_el_init(void)
 {
-	__asm__ __volatile__ ("isb" : : : "memory");
+	/* No high-EL initialization is required for this platform. */
 }
 
 /****************************************************************************
