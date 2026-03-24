@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include "arm_internal.h"
 #include "arch/chip/chip.h"
-#include "chip.h"
 
 extern uint8_t _load_data_start[];
 extern uint8_t _data_start[];
