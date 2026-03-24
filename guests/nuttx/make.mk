@@ -16,6 +16,7 @@ nuttx_kconfig_stamp:=$(nuttx_kconfig_dir)/.installed
 
 nuttx_build_dir:=$(wrkdir_demo_imgs)/nuttx_build
 nuttx_board_profile:=bao_guest
+
 nuttx_bin:=$(nuttx_build_dir)/nuttx.bin
 
 nuttx_cc_name:=$(CROSS_COMPILE)gcc
