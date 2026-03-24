@@ -545,7 +545,7 @@ diff --git a/arch/arm/src/armv8-r/arm_vectors.S b/arch/arm/src/armv8-r/arm_vecto
 index abe52d60..968d4de5 100644
 --- a/arch/arm/src/armv8-r/arm_vectors.S
 +++ b/arch/arm/src/armv8-r/arm_vectors.S
-@@ -28,6 +28,7 @@
+@@ -29,5 +29,6 @@
  #include <nuttx/irq.h>
 
  #include "arm.h"
