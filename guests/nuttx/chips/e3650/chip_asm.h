@@ -1,5 +1,5 @@
-#ifndef __CHIPS_E3650_CHIP_H
-#define __CHIPS_E3650_CHIP_H
+#ifndef __CHIPS_E3650_CHIP_ASM_H
+#define __CHIPS_E3650_CHIP_ASM_H
 
  #include <nuttx/config.h>
 
@@ -62,4 +62,4 @@
 
 #endif /* __ASSEMBLY__ */
 
-#endif /* __CHIPS_E3650_CHIP_H */
+#endif /* __CHIPS_E3650_CHIP_ASM_H */

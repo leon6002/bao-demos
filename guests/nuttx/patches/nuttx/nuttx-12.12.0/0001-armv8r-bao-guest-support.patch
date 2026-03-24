@@ -549,7 +549,6 @@ index abe52d60..968d4de5 100644
  #include <nuttx/irq.h>
 
  #include "arm.h"
-+#include "chip.h"
++#include "chip_asm.h"
 
  	.file	"arm_vectors.S"
-
