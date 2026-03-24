@@ -1,44 +1,15 @@
 #include <nuttx/config.h>
-#include <stdint.h>
 #include <nuttx/board.h>
 
 #include "chip.h"
 #include "e3650.h"
 
 /****************************************************************************
- * Name: e3650_memory_initialize
- *
- * Description:
- *   All architectures must provide the following entry point.  This
- *   entry point is called early in the initialization before memory has
- *   been configured.  This board-specific function is responsible for
- *   configuring any on-board memories.
- *
- *   Logic in e3650_memory_initialize must be careful to avoid using any
- *   global variables because those will be uninitialized at the time this
- *   function is called.
- *
- * Input Parameters:
- *   None
- *
- * Returned Value:
- *   None
- *
- ****************************************************************************/
-
-void e3650_memory_initialize(void)
-{
-  /* SDRAM was initialized by a bootloader in the supported configurations. */
-}
-
-/****************************************************************************
  * Name: e3650_board_initialize
  *
  * Description:
- *   All architectures must provide the following entry point.  This
- *   entry point is called in the initialization phase -- after
- *   e3650_memory_initialize and after all memory has been configured and
- *   mapped but before any devices have been initialized.
+ *   Board-specific initialization entry point after architecture-level
+ *   setup and before devices are initialized.
  *
  * Input Parameters:
  *   None
@@ -51,8 +22,9 @@ void e3650_memory_initialize(void)
 void e3650_board_initialize(void)
 {
 #ifdef CONFIG_ARCH_LEDS
-	/* Configure on-board LEDs if LED support has been selected. */
-	board_autoled_initialize();
+  /* Configure on-board LEDs if LED support has been selected. */
+
+  board_autoled_initialize();
 #endif
 }
 
@@ -72,8 +44,9 @@ void e3650_board_initialize(void)
 #ifdef CONFIG_BOARD_LATE_INITIALIZE
 void board_late_initialize(void)
 {
-	/* Perform board initialization */
-	e3650_bringup();
+  /* Perform board initialization */
+
+  e3650_bringup();
 }
 #endif /* CONFIG_BOARD_LATE_INITIALIZE */
 

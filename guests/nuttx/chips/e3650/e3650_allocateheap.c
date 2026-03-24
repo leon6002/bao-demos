@@ -1,9 +1,5 @@
 #include <nuttx/config.h>
-#include <sys/types.h>
-#include <debug.h>
 #include <nuttx/arch.h>
-#include <nuttx/sched.h>
-#include <nuttx/board.h>
 
 extern uint8_t _core0_heap_start[];
 extern uint8_t _core0_heap_end[];
@@ -57,6 +53,10 @@ void up_allocate_heap(void **heap_start, size_t *heap_size)
       break;
 
     default:
-        break;
+      /* Defensive fallback for unexpected CPU IDs. */
+
+      *heap_start = (void *)_core0_heap_start;
+      *heap_size = (size_t)_core0_heap_end - (size_t)_core0_heap_start;
+      break;
   }
 }
