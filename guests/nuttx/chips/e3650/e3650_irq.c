@@ -16,15 +16,13 @@
 
 #if defined(CONFIG_SMP)
 #  define E3650_IRQ_NCPUS CONFIG_SMP_NCPUS
-#elif defined(CONFIG_BMP)
-#  define E3650_IRQ_NCPUS CONFIG_BMP_NCPUS
 #else
 #  define E3650_IRQ_NCPUS 1
 #endif
 
 #define INTSTACK_ALLOC (E3650_IRQ_NCPUS * INTSTACK_SIZE)
 
-#if (defined(CONFIG_SMP) || defined(CONFIG_BMP)) && CONFIG_ARCH_INTERRUPTSTACK > 7
+#if defined(CONFIG_SMP) && CONFIG_ARCH_INTERRUPTSTACK > 7
 /* In the SMP configuration, we will need custom IRQ and FIQ stacks.
  * These definitions provide the aligned stack allocations.
  */
@@ -69,7 +67,7 @@ const uintptr_t g_fiqstack_top[E3650_IRQ_NCPUS] = { (uintptr_t)g_fiqstack_alloc 
  *
  ****************************************************************************/
 
-#if (defined(CONFIG_SMP) || defined(CONFIG_BMP)) && CONFIG_ARCH_INTERRUPTSTACK > 7
+#if defined(CONFIG_SMP) && CONFIG_ARCH_INTERRUPTSTACK > 7
 uintptr_t up_get_intstackbase(int cpu)
 {
 	return g_irqstack_top[cpu] - INTSTACK_SIZE;
