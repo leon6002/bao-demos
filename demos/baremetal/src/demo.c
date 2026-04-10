@@ -14,18 +14,15 @@
 #include <irq.h>
 #include <uart.h>
 #include <timer.h>
-#include <fences.h>
 
 #define TIMER_INTERVAL (TIME_S(1))
 
 spinlock_t print_lock = SPINLOCK_INITVAL;
-static volatile unsigned long startup_print_turn = 0;
 
 void uart_rx_handler(unsigned id){
-    static int irq_count = 0;
     (void)id;
     uart_clear_rxirq();
-    printf("cpu%d: %s %d\n",get_cpuid(), __func__, ++irq_count);
+    printf("cpu%d: %s\n", get_cpuid(), __func__);
 }
 
 void ipi_handler(unsigned id){
@@ -45,38 +42,11 @@ void timer_handler(unsigned id){
 void main(void){
 
     static volatile bool master_done = false;
-    unsigned long cpuid = get_cpuid();
 
     if(cpu_is_master()){
         spin_lock(&print_lock);
         printf("Bao bare-metal test guest\n");
         spin_unlock(&print_lock);
-
-        fence_sync_write();
-        master_done = true;
-        fence_sync_write();
-    }
-
-    while(!master_done) {
-        fence_ord();
-    }
-
-    while (startup_print_turn != cpuid) {
-        fence_ord();
-    }
-
-    spin_lock(&print_lock);
-    printf("cpu %lu up\n", cpuid);
-    spin_unlock(&print_lock);
-    fence_sync_write();
-    startup_print_turn = cpuid + 1;
-    fence_sync_write();
-
-    irq_set_handler(IPI_IRQ_ID, ipi_handler);
-    irq_enable(IPI_IRQ_ID);
-    irq_set_prio(IPI_IRQ_ID, IPI_IRQ_PRIO);
-
-    if(cpu_is_master()){
         irq_set_handler(UART_IRQ_ID, uart_rx_handler);
         irq_set_handler(TIMER_IRQ_ID, timer_handler);
 
@@ -90,7 +60,19 @@ void main(void){
         irq_set_prio(UART_IRQ_ID, UART_IRQ_PRIO);
 
         timer_enable();
+
+        master_done = true;
     }
+
+    irq_set_handler(IPI_IRQ_ID, ipi_handler);
+    irq_enable(IPI_IRQ_ID);
+    irq_set_prio(IPI_IRQ_ID, IPI_IRQ_PRIO);
+
+    while(!master_done);
+
+    spin_lock(&print_lock);
+    printf("cpu %lu up\n", get_cpuid());
+    spin_unlock(&print_lock);
 
     while(1) wfi();
 }
